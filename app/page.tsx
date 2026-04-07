@@ -9,6 +9,7 @@ import {
   AlertCircle,
   CheckCircle2,
   ChevronDown,
+  Dices,
   Download,
   FileSpreadsheet,
   MoonStar,
@@ -327,8 +328,7 @@ export default function Home() {
           ref={backgroundRef}
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage:
-              "url('https://kimi-web-img.moonshot.cn/img/t3.ftcdn.net/510a81426d93258c21f121be8f76eec5cf103366.jpg')",
+            backgroundImage: "url('/makka.jpg')",
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/70 to-slate-950/90" />
@@ -488,7 +488,7 @@ export default function Home() {
                   : "bg-linear-to-bl from-emerald-600 to-lime-400 hover:scale-105 hover:from-emerald-500 hover:to-lime-300 hover:shadow-2xl hover:shadow-emerald-500/25"
               }`}
             >
-              <MoonStar
+              <Dices
                 className={`h-6 w-6 ${
                   isPicking ? "animate-spin" : "group-hover:animate-pulse"
                 }`}
@@ -515,7 +515,7 @@ export default function Home() {
               <div className="relative rounded-[22px] border border-white/10 bg-slate-900/90 p-8 text-center backdrop-blur-2xl md:p-12">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-slate-900 bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-2xl shadow-emerald-500/50">
-                    <MoonStar className="h-10 w-10 text-white" />
+                    <Dices className="h-10 w-10 text-white" />
                   </div>
                 </div>
 
