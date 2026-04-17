@@ -108,8 +108,8 @@ export default function AnimatedList({
   initialSelectedIndex = -1,
 }: AnimatedListProps) {
   const listRef = useRef<HTMLDivElement>(null);
+  const keyboardNavRef = useRef(false);
   const [selectedIndex, setSelectedIndex] = useState(initialSelectedIndex);
-  const [keyboardNav, setKeyboardNav] = useState(false);
   const [topGradientOpacity, setTopGradientOpacity] = useState(0);
   const [bottomGradientOpacity, setBottomGradientOpacity] = useState(1);
 
@@ -140,11 +140,11 @@ export default function AnimatedList({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "ArrowDown" || (event.key === "Tab" && !event.shiftKey)) {
         event.preventDefault();
-        setKeyboardNav(true);
+        keyboardNavRef.current = true;
         setSelectedIndex((previous) => Math.min(previous + 1, items.length - 1));
       } else if (event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey)) {
         event.preventDefault();
-        setKeyboardNav(true);
+        keyboardNavRef.current = true;
         setSelectedIndex((previous) => Math.max(previous - 1, 0));
       } else if (event.key === "Enter" && selectedIndex >= 0 && selectedIndex < items.length) {
         event.preventDefault();
@@ -157,14 +157,14 @@ export default function AnimatedList({
   }, [enableArrowNavigation, items, onItemSelect, selectedIndex]);
 
   useEffect(() => {
-    if (!keyboardNav || selectedIndex < 0 || !listRef.current) {
+    if (!keyboardNavRef.current || selectedIndex < 0 || !listRef.current) {
       return;
     }
 
     const container = listRef.current;
     const selectedItem = container.querySelector<HTMLElement>(`[data-index="${selectedIndex}"]`);
     if (!selectedItem) {
-      setKeyboardNav(false);
+      keyboardNavRef.current = false;
       return;
     }
 
@@ -183,8 +183,8 @@ export default function AnimatedList({
       });
     }
 
-    setKeyboardNav(false);
-  }, [keyboardNav, selectedIndex]);
+    keyboardNavRef.current = false;
+  }, [selectedIndex]);
 
   return (
     <div className={`relative w-full ${className}`}>
