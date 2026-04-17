@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import CountUp from "@/components/CountUp";
 import {
   AlertDialog,
@@ -54,6 +54,13 @@ function shuffleEntries(entries: PersonEntry[]) {
   return nextEntries;
 }
 
+function clearTimer(timerRef: MutableRefObject<number | null>) {
+  if (timerRef.current) {
+    window.clearTimeout(timerRef.current);
+    timerRef.current = null;
+  }
+}
+
 export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
   const [files, setFiles] = useState(initialFiles);
   const [selectedFile, setSelectedFile] = useState("");
@@ -82,13 +89,8 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
 
   useEffect(() => {
     return () => {
-      if (drawTimeoutRef.current) {
-        window.clearTimeout(drawTimeoutRef.current);
-      }
-
-      if (shuffleTimeoutRef.current) {
-        window.clearTimeout(shuffleTimeoutRef.current);
-      }
+      clearTimer(drawTimeoutRef);
+      clearTimer(shuffleTimeoutRef);
     };
   }, []);
 
@@ -155,13 +157,8 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
   }
 
   function resetSelection() {
-    if (drawTimeoutRef.current) {
-      window.clearTimeout(drawTimeoutRef.current);
-    }
-
-    if (shuffleTimeoutRef.current) {
-      window.clearTimeout(shuffleTimeoutRef.current);
-    }
+    clearTimer(drawTimeoutRef);
+    clearTimer(shuffleTimeoutRef);
 
     setSelectedFile("");
     setAllPeople([]);
@@ -187,13 +184,8 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
   }
 
   function resetWinners() {
-    if (drawTimeoutRef.current) {
-      window.clearTimeout(drawTimeoutRef.current);
-    }
-
-    if (shuffleTimeoutRef.current) {
-      window.clearTimeout(shuffleTimeoutRef.current);
-    }
+    clearTimer(drawTimeoutRef);
+    clearTimer(shuffleTimeoutRef);
 
     setPeople(allPeople);
     setWinners([]);
@@ -211,9 +203,7 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
       return;
     }
 
-    if (shuffleTimeoutRef.current) {
-      window.clearTimeout(shuffleTimeoutRef.current);
-    }
+    clearTimer(shuffleTimeoutRef);
 
     setIsShuffling(true);
     setPeople((previous) => shuffleEntries(previous));
@@ -313,18 +303,10 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
 
   return (
     <main
-      className="h-screen overflow-hidden bg-stone-50 text-slate-900 selection:bg-emerald-100"
+      className="h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.08),_transparent_42%),linear-gradient(180deg,_rgba(255,253,247,0.38)_0%,_rgba(248,250,252,0.52)_52%,_rgba(238,247,241,0.65)_100%)] text-slate-900 selection:bg-emerald-100"
       dir="rtl"
     >
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.14),_transparent_42%),linear-gradient(180deg,_#fffdf7_0%,_#f8fafc_52%,_#eef7f1_100%)]" />
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-[0.08]"
-          style={{ backgroundImage: "url('/makka.jpg')" }}
-        />
-      </div>
-
-      <div className="relative z-10 h-full p-3 md:p-4">
+      <div className="h-full p-3 md:p-4">
         <div className="flex h-full min-h-0 flex-col rounded-[32px] border border-emerald-100/80 bg-white/88 p-3 shadow-[0_28px_90px_-42px_rgba(15,23,42,0.35)] backdrop-blur md:p-4">
           <section className="mb-3 rounded-[28px] border border-emerald-100 bg-gradient-to-l from-emerald-50 via-white to-amber-50 p-4 md:mb-4 md:p-6">
             <div className="flex h-full flex-col justify-between gap-4 lg:flex-row lg:items-center">
