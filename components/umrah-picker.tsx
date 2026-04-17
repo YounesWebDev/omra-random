@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import CountUp from "@/components/CountUp";
 import {
@@ -34,9 +35,21 @@ interface UmrahPickerProps {
 
 type ListMode = "files" | "people";
 const SPIN_DURATION_SECONDS = 2.2;
+const SHUFFLE_DURATION_MS = 500;
 
 function getPersonKey(person: Pick<PersonEntry, "cells">) {
   return person.cells.map((value) => value.trim().toLowerCase()).join("|");
+}
+
+function shuffleEntries(entries: PersonEntry[]) {
+  const nextEntries = [...entries];
+
+  for (let index = nextEntries.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [nextEntries[index], nextEntries[randomIndex]] = [nextEntries[randomIndex], nextEntries[index]];
+  }
+
+  return nextEntries;
 }
 
 export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
@@ -51,6 +64,7 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
   const [loadingPeople, setLoadingPeople] = useState(false);
   const [refreshingFiles, setRefreshingFiles] = useState(false);
   const [savingWinners, setSavingWinners] = useState(false);
+  const [isShuffling, setIsShuffling] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [spinSequence, setSpinSequence] = useState<string[]>([]);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
@@ -61,11 +75,16 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
       : "مجلد Files فارغ. أضف ملف Excel أولًا.",
   );
   const drawTimeoutRef = useRef<number | null>(null);
+  const shuffleTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (drawTimeoutRef.current) {
         window.clearTimeout(drawTimeoutRef.current);
+      }
+
+      if (shuffleTimeoutRef.current) {
+        window.clearTimeout(shuffleTimeoutRef.current);
       }
     };
   }, []);
@@ -136,6 +155,10 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
       window.clearTimeout(drawTimeoutRef.current);
     }
 
+    if (shuffleTimeoutRef.current) {
+      window.clearTimeout(shuffleTimeoutRef.current);
+    }
+
     setSelectedFile("");
     setAllPeople([]);
     setPeople([]);
@@ -145,6 +168,7 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
     setSearchQuery("");
     setListMode("files");
     setIsDrawing(false);
+    setIsShuffling(false);
     setHasDownloadedWinners(false);
   }
 
@@ -162,13 +186,36 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
       window.clearTimeout(drawTimeoutRef.current);
     }
 
+    if (shuffleTimeoutRef.current) {
+      window.clearTimeout(shuffleTimeoutRef.current);
+    }
+
     setPeople(allPeople);
     setWinners([]);
     setCurrentWinner(null);
     setSpinSequence([]);
     setIsDrawing(false);
+    setIsShuffling(false);
     setHasDownloadedWinners(false);
     setStatusMessage(selectedFile ? `تمت إعادة تعيين نتائج ${selectedFile}.` : statusMessage);
+  }
+
+  function shufflePeople() {
+    if (people.length < 2 || isDrawing || isShuffling) {
+      return;
+    }
+
+    if (shuffleTimeoutRef.current) {
+      window.clearTimeout(shuffleTimeoutRef.current);
+    }
+
+    setIsShuffling(true);
+    setPeople((previous) => shuffleEntries(previous));
+    setStatusMessage("\u062a\u0645 \u062e\u0644\u0637 \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0623\u0633\u0645\u0627\u0621.");
+
+    shuffleTimeoutRef.current = window.setTimeout(() => {
+      setIsShuffling(false);
+    }, SHUFFLE_DURATION_MS);
   }
 
   function pickWinner() {
@@ -274,7 +321,7 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
           <section className="mb-3 rounded-3xl border border-white/10 bg-white/5 p-4 md:mb-4 md:p-6">
             <div className="flex h-full flex-col justify-between gap-4 lg:flex-row lg:items-center">
               <div className="min-w-0">
-                <h1 className="bg-gradient-to-r from-emerald-200 via-white to-emerald-200 bg-clip-text text-3xl leading-tight font-bold text-transparent md:text-5xl">
+                <h1 className="bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-2xl leading-tight font-bold text-transparent md:text-5xl">
                   اختيار عشوائي للعمرة
                 </h1>
               </div>
@@ -338,6 +385,22 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
+                    {listMode === "people" && (
+                      <button
+                        type="button"
+                        onClick={shufflePeople}
+                        disabled={loadingPeople || people.length < 2 || isDrawing || isShuffling}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:border-emerald-500/30 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <RefreshCcw
+                          className={`h-4 w-4 text-emerald-400 ${
+                            isShuffling ? "animate-spin" : ""
+                          }`}
+                        />
+                        {"\u062e\u0644\u0637 \u0627\u0644\u0642\u0627\u0626\u0645\u0629"}
+                      </button>
+                    )}
+
                     {listMode === "people" && (
                       <button
                         type="button"
@@ -408,12 +471,25 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
                     ) : filteredPeople.length === 0 ? (
                       <EmptyState text="لا توجد نتائج مطابقة." />
                     ) : (
-                      filteredPeople.map((person, index) => {
+                      <AnimatePresence initial={false}>
+                        {filteredPeople.map((person, index) => {
                         const picked = winners.some((winner) => winner.id === person.id);
 
                         return (
-                          <div
+                          <motion.div
                             key={person.id}
+                            layout
+                            initial={{ opacity: 0, y: 14, scale: 0.985 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -14, scale: 0.985 }}
+                            transition={{
+                              layout: {
+                                duration: 0.45,
+                                ease: [0.22, 1, 0.36, 1],
+                              },
+                              duration: 0.22,
+                              ease: [0.22, 1, 0.36, 1],
+                            }}
                             className={`flex items-center justify-between rounded-2xl border p-4 ${
                               picked
                                 ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-200"
@@ -443,9 +519,10 @@ export default function UmrahPicker({ initialFiles }: UmrahPickerProps) {
                             >
                               {picked ? "تم الاختيار" : "بانتظار السحب"}
                             </span>
-                          </div>
+                          </motion.div>
                         );
-                      })
+                        })}
+                      </AnimatePresence>
                     )}
                   </div>
                 </div>
